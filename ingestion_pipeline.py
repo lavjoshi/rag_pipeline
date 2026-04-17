@@ -2,10 +2,11 @@
 import os
 from dotenv import load_dotenv
 from langchain_community.document_loaders import DirectoryLoader, TextLoader
-from langchain_text_splitters import CharacterTextSplitter
+from langchain_text_splitters import CharacterTextSplitter, RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
+from langchain_experimental.text_splitter import SemanticChunker
+from agentic_chunker import AgenticChunker
 
 load_dotenv()
 
@@ -32,12 +33,31 @@ def load_documents(docs_dir: str):
 
     return documents
 
+def get_separator(chunk_size: int, chunk_overlap: int, type: str = "character"):
+    match type.lower():
+        case "character" | "char":
+            return CharacterTextSplitter(
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            )
+        case "recursive_character" | "recursive":
+            return RecursiveCharacterTextSplitter(
+                separators=["\n\n", "\n", ". "," ", ""],
+                chunk_size=chunk_size,
+                chunk_overlap=chunk_overlap,
+            )
+        case "semantic" | "semantic_character":
+            return AgenticChunker()
+        case _:
+            raise ValueError(
+                f"Unsupported splitter type: {type}. "
+                "Supported values: character, recursive_character"
+            )
+
+
 
 def split_documents(documents, chunk_size: int, chunk_overlap: int):
-    splitter = CharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap,
-    )
+    splitter = get_separator(chunk_size, chunk_overlap)
 
     all_chunks = []
     for document in documents:
