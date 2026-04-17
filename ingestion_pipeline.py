@@ -46,12 +46,18 @@ def get_separator(chunk_size: int, chunk_overlap: int, type: str = "character"):
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
             )
-        case "semantic" | "semantic_character":
+        case "semantic_chunker" | "semantic":
+            return SemanticChunker(
+                embeddings=GoogleGenerativeAIEmbeddings(model="gemini-embedding-001"),
+                breakpoint_threshold_type="percent",
+                breakpoint_threshold_amount=70
+            )
+        case "agentic" | "agent":
             return AgenticChunker()
         case _:
             raise ValueError(
                 f"Unsupported splitter type: {type}. "
-                "Supported values: character, recursive_character"
+                "Supported values: character, recursive_character, agentic"
             )
 
 
