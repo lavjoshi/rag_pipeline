@@ -1,5 +1,6 @@
 /docs/**
 .env
 /db
-/venv
+/vir_env
 /temp
+/**/db

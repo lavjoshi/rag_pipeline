@@ -5,6 +5,7 @@ from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_text_splitters import CharacterTextSplitter, RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_ollama import OllamaEmbeddings
 from langchain_experimental.text_splitter import SemanticChunker
 from agentic_chunker import AgenticChunker
 
@@ -81,8 +82,18 @@ def split_documents(documents, chunk_size: int, chunk_overlap: int):
     return all_chunks
 
 
-def create_vector_store(chunks, persist_dir: str = "db/chroma_db"):
-    embedding_model = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
+def create_vector_store(chunks, persist_dir: str = "db/chroma_db_v2", model: str = "gemini-embedding-001"):
+    match model.lower():
+        case "gemini-embedding-001":
+            embedding_model = GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")
+        case "qwen3-embedding":
+            embedding_model = OllamaEmbeddings(model="qwen3-embedding")
+
+        case _:
+            raise ValueError(
+                f"Unsupported embedding model: {model}. "
+                "Supported values: gemini-embedding-001"
+            )
     vector_store = Chroma.from_documents(
         documents=chunks,
         embedding=embedding_model,
@@ -99,7 +110,7 @@ def main():
     documents = load_documents(docs_dir)
     chunks = split_documents(documents, chunk_size=800, chunk_overlap=0)
     print(f"Total chunks created: {len(chunks)}")
-    vector_store = create_vector_store(chunks)
+    vector_store = create_vector_store(chunks, model="qwen3-embedding")
 
 
 if __name__ == "__main__":
