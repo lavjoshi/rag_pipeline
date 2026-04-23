@@ -5,6 +5,7 @@ from typing import Iterable
 from langchain_core.documents import Document
 from dotenv import load_dotenv
 from langchain_chroma import Chroma
+from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
@@ -12,8 +13,14 @@ load_dotenv()
 
 
 class AgenticChunker:
-        def __init__(self):
-            self.llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview")
+        def __init__(self, model_name: str = "gemini-3-flash-preview"):
+            match model_name:
+                case "gemini-3-flash-preview" | "gemini-3-flash":
+                    self.llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview")
+                case "qwen3.6" | "qwen3":
+                    self.llm = ChatOllama(model="qwen3.6")
+                case _:
+                    raise ValueError(f"Unsupported model name: {model_name}. Supported values: gemini-3-flash-preview, gemini-3-flash, qwen3.6, qwen3")
 
         def split_documents(self, documents: Iterable[Document]):
             all_chunks = []
@@ -38,7 +45,7 @@ class AgenticChunker:
 
 def main():
     documents = [Document(page_content="This is a sample document. It contains multiple sentences. The goal is to split it into meaningful chunks. I'm testing the AgenticChunker. It should return chunks that are semantically coherent. It's important that the chunks are not too long or too short. Let's see how it performs.")]
-    chunker = AgenticChunker()
+    chunker = AgenticChunker("qwen3.6")
     chunks = chunker.split_documents(documents)
     print("Generated Chunks:")
     for index, chunk in enumerate(chunks, start=1):
